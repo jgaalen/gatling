@@ -54,8 +54,12 @@ class Pace(intervalExpr: Expression[Duration], counter: String, system: ActorSys
       val startTimeOpt = session(counter).asOption[Long]
       val now = clock.nowMillis
       val startTime = startTimeOpt.getOrElse(now)
-      val nextStartTime = startTime + interval.toMillis
       val waitTime = startTime - now
+      var nextStartTime = startTime + interval.toMillis
+      
+      if (waitTime <= 0) { // If overran than reset pacing
+        nextStartTime = now + interval.toMillis
+      }
 
       def doNext(): Unit = next ! session.set(counter, nextStartTime)
 
